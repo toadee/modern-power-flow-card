@@ -567,17 +567,75 @@ export class SunSynkCardEditor
 							},
 						],
 					},
-					{
-						name: 'cardstyle',
-						selector: {
-							select: {
-								options: Object.values(CardStyle).map((x) => ({
-									label: capitalize(x),
-									value: x,
-								})),
-							},
-						},
-					},
+                    {
+                        name: 'cardstyle',
+                        selector: {
+                            select: {
+                                options: Object.values(CardStyle).map((x) => ({
+                                    label: capitalize(x),
+                                    value: x,
+                                })),
+                            },
+                        },
+                    },
+                    // ---------- Modern style options (only shown when cardstyle = modern) ----------
+                    ...(this._config?.cardstyle === CardStyle.Modern
+                        ? [
+                                {
+                                    type: 'expandable',
+                                    title: 'Modern',
+                                    schema: [
+                                        {
+                                            type: 'grid',
+                                            schema: [
+                                                { name: 'modern_scene_image', selector: { text: {} } },
+                                            ],
+                                        },
+                                        {
+                                            name: 'modern',
+                                            type: 'grid',
+                                            schema: [
+                                                { name: 'title', selector: { text: {} } },
+                                                { name: 'subtitle', selector: { text: {} } },
+                                                { name: 'show_header', selector: { boolean: {} } },
+                                                { name: 'show_unmeasured', selector: { boolean: {} } },
+                                                { name: 'grid_off_colour', selector: { color_rgb: {} } },
+                                                { name: 'scene_width', selector: { text: {} } },
+                                                { name: 'tile_min_width', selector: { text: {} } },
+                                                {
+                                                    name: 'layout',
+                                                    selector: {
+                                                        select: {
+                                                            mode: 'dropdown',
+                                                            options: [
+                                                                { label: 'Auto (side-by-side when room)', value: 'auto' },
+                                                                { label: 'Stacked (blocks below)', value: 'stacked' },
+                                                                { label: 'Side by side', value: 'side' },
+                                                            ],
+                                                        },
+                                                    },
+                                                },
+                                                {
+                                                    name: 'scene_position',
+                                                    selector: {
+                                                        select: {
+                                                            mode: 'dropdown',
+                                                            options: [
+                                                                { label: 'Left', value: 'left' },
+                                                                { label: 'Right', value: 'right' },
+                                                            ],
+                                                        },
+                                                    },
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ]
+                        : []),
+                    {
+                        type: 'expandable',
+                        title: this._title('general'),
 					{
 						type: 'expandable',
 						title: this._title('general'),
