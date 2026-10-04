@@ -463,6 +463,12 @@ export class SunSynkCardEditor
 			c.inverter as Record<string, unknown>,
 			['colour'],
 		);
+		        if (c.modern) {
+            copy.modern = this._convertSectionColours(
+                c.modern as unknown as Record<string, unknown>,
+                ['grid_off_colour'],
+            );
+        }
 		copy.solar = this._convertSectionColours(
 			c.solar as Record<string, unknown>,
 			['colour'],
