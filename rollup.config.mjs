@@ -6,22 +6,16 @@ import terser from '@rollup/plugin-terser';
 import json from '@rollup/plugin-json';
 import url from '@rollup/plugin-url';
 
-const plugins = [
-  // Always inline scene artwork as a data URI so it ships inside the single JS file
-  url({
-    include: ['**/*.webp', '**/*.png'],
-    limit: Infinity,
-  }),
-  nodeResolve({
-    jsnext: true,
-    main: true,
-  }),
-  // ...rest unchanged
-];
-
 const isWatch = process.env.ROLLUP_WATCH === 'true';
 
 const plugins = [
+  // Inline scene artwork as a data URI so it ships inside the single JS file.
+  // Must run before typescript/babel so the image import is resolved first.
+  url({
+    include: ['**/*.webp', '**/*.png'],
+    limit: 10 * 1024 * 1024, // 10 MB ceiling – always inline, never emit a separate file
+    emitFiles: false,
+  }),
   nodeResolve({
     jsnext: true,
     main: true,
@@ -66,7 +60,7 @@ export default {
   output: {
     file: 'dist/solar-powerflow-card.js',
     format: 'esm',
-    name: 'SolarkPowerFlowCard',
+    name: 'SolarPowerflowCard',
     inlineDynamicImports: true,
     sourcemap: true,
   },
@@ -78,8 +72,6 @@ export default {
     if (warning.code === 'THIS_IS_UNDEFINED') {
       return;
     }
-
-    // console.warn everything else
     handler(warning);
   },
 };
