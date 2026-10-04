@@ -1,8 +1,8 @@
 {
-  "name": "solar-power-flow-card",
+  "name": "solar-powerflow-card",
   "version": "8.0.0",
   "description": "A customizable Home Assistant card to emulate the Sunsynk System flow that's displayed on the Inverter screen.",
-  "main": "solar-power-flow-card.js",
+  "main": "solar-powerflow-card.js",
   "prettier": {
     "singleQuote": true,
     "jsxSingleQuote": false,
