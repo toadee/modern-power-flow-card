@@ -10,11 +10,13 @@ import { customElement, property, query } from 'lit/decorators.js';
 import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
 import { styles } from './style';
 import {
-	CardStyle,
-	DataDto,
-	InverterModel,
-	InverterSettings,
-	sunsynkPowerFlowCardConfig,
+    CardStyle,
+    DataDto,
+    InverterModel,
+    InverterSettings,
+    ModernEntityItem,
+    ModernResolvedItem,
+    sunsynkPowerFlowCardConfig,
 } from './types';
 import defaultConfig from './defaults';
 import {
@@ -39,7 +41,6 @@ import { Utils } from './helpers/utils';
 import { fullCard } from './cards/full-card';
 import { compactCard } from './cards/compact-card';
 import { modernCard } from './cards/modern-card';
-import { ModernEntityItem, ModernResolvedItem } from './types'; // or merge into the existing types import
 import { globalData } from './helpers/globals';
 import { InverterFactory } from './inverters/inverter-factory';
 import { BatteryIconManager } from './helpers/battery-icon-manager';
@@ -2521,6 +2522,56 @@ export class SunsynkPowerFlowCard extends LitElement {
 					: batteryShutdown2;
 				break;
 		}
+
+		// ---------- Modern card: resolve monitored loads & extra inverter stats ----------
+        let modernLoads: ModernResolvedItem[] = [];
+        let modernInverterStats: ModernResolvedItem[] = [];
+        if (this.isModernCard) {
+            const resolve = (items?: ModernEntityItem[]): ModernResolvedItem[] =>
+                (items ?? [])
+                    .filter((i) => typeof i?.entity === 'string' && i.entity.includes('.'))
+                    .map((i) => {
+                        const state = this.getEntityById(i.entity);
+                        return {
+                            entityId: i.entity,
+                            name: i.name || String(state.attributes?.friendly_name ?? i.entity),
+                            icon: i.icon || String(state.attributes?.icon ?? 'mdi:flash'),
+                            state,
+                        };
+                    });
+
+            if (config.modern?.loads?.length) {
+                modernLoads = resolve(config.modern.loads);
+            } else {
+                // Back-compat: reuse essential_load1..N slots, names and icons
+                const count = Math.min(
+                    Math.max(Number(config.load?.additional_loads) || 0, 0),
+                    6,
+                );
+                const ents = config.entities as unknown as Record<string, unknown>;
+                const loadCfg = (config.load ?? {}) as unknown as Record<string, unknown>;
+                const loadIcons = [
+                    iconEssentialLoad1,
+                    iconEssentialLoad2,
+                    iconEssentialLoad3,
+                    iconEssentialLoad4,
+                    iconEssentialLoad5,
+                    iconEssentialLoad6,
+                ];
+                modernLoads = resolve(
+                    Array.from({ length: count }, (_, i) => ({
+                        entity: String(ents[`essential_load${i + 1}`] ?? ''),
+                        name: (loadCfg[`load${i + 1}_name`] as string) || undefined,
+                        icon:
+                            loadIcons[i] && loadIcons[i] !== 'default'
+                                ? loadIcons[i]
+                                : undefined,
+                    })),
+                );
+            }
+            modernInverterStats = resolve(config.modern?.inverter_stats);
+        }
+
 		/**
 		 * The current structure of this data object is intentional, but it is considered temporary.
 		 * There is a need to evaluate the data being passed, as there might be duplication.
@@ -2765,14 +2816,16 @@ export class SunsynkPowerFlowCard extends LitElement {
 			customGridIconColour,
 			maximumSOC,
 			batteryCount,
+			modernLoads,
+            modernInverterStats,
 		};
 
-		let template: TemplateResult | null = null;
-		let variantKey: 'full' | 'compact' | 'modern' | undefined;
-		if ((config as sunsynkPowerFlowCardConfig & ModernSceneOptions).modern_view) {
-			variantKey = 'modern';
-			template = modernCard(config, data);
-		} else if (this.isFullCard) {
+        let template: TemplateResult | null = null;
+        let variantKey: 'full' | 'compact' | 'modern' | undefined;
+        if (this.isModernCard) {
+            variantKey = 'modern';
+            template = modernCard(config, data);
+        } else if (this.isFullCard) {
 			variantKey = 'full';
 			template = fullCard(config, inverterImg, data);
 		} else if (this.isLiteCard || this.isCompactCard) {
@@ -2855,9 +2908,32 @@ export class SunsynkPowerFlowCard extends LitElement {
 			this._lastEntityStates.set(entityString, String(haState.state ?? ''));
 		}
 
-		this._entityCache.set(cacheKey, converted);
-		return converted;
-	}
+        this._entityCache.set(cacheKey, converted);
+        return converted;
+    }
+
+    /**
+     * Like getEntity(), but takes a raw entity_id (used by modern.loads / modern.inverter_stats).
+     * Registers the entity in _trackedEntityIds so shouldUpdate() re-renders when it changes.
+     */
+    private getEntityById(entityId: string, decimals = 0): CustomEntity {
+        const cacheKey = `id:${entityId}|${decimals}`;
+        const cached = this._entityCache.get(cacheKey);
+        if (cached) return cached;
+
+        this._trackedEntityIds.add(entityId);
+        const haState = this.hass.states[entityId];
+        const converted = convertToCustomEntity(
+            haState ?? { state: undefined, attributes: {} },
+            'NA',
+            decimals,
+        );
+        if (haState) {
+            this._lastEntityStates.set(entityId, String(haState.state ?? ''));
+        }
+        this._entityCache.set(cacheKey, converted);
+        return converted;
+    }
 
 	changeAnimationSpeed(el: string, speedRaw: number) {
 		const speed = speedRaw >= 1 ? Utils.toNum(speedRaw, 3) : 1;
@@ -2911,9 +2987,16 @@ export class SunsynkPowerFlowCard extends LitElement {
 		return this._config.cardstyle == CardStyle.Lite;
 	}
 
-	get isFullCard() {
-		return this._config.cardstyle == CardStyle.Full;
-	}
+    get isFullCard() {
+        return this._config.cardstyle == CardStyle.Full;
+    }
+
+    get isModernCard() {
+        return (
+            this._config.cardstyle == CardStyle.Modern ||
+            this._config.modern_view === true // legacy flag still honoured
+        );
+    }
 
 	colourConvert(colour: string) {
 		const key = Array.isArray(colour) ? `arr:${colour}` : `str:${colour}`;
@@ -3122,8 +3205,8 @@ export class SunsynkPowerFlowCard extends LitElement {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).customCards.push({
-	type: 'sunsynk-power-flow-card',
-	name: 'Sunsynk Power Flow Card',
+    type: MAIN_NAME,
+    name: 'Solar Power Flow Card',
 	preview: true,
 	description: localize('common.description'),
 	configurable: true,
