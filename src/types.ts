@@ -228,7 +228,7 @@ export interface sunsynkPowerFlowCardConfig extends LovelaceCardConfig {
 		label_daily_grid_sell: string;
 		export_colour: string;
 		no_grid_colour: string;
-		grid_off_colour?: string | number [];
+		grid_off_colour: string;
 		show_daily_buy: boolean;
 		show_daily_sell: boolean;
 		show_nonessential: boolean;
@@ -395,7 +395,7 @@ export interface ModernConfig {
     subtitle?: string;
     show_header?: boolean;
     show_unmeasured?: boolean;
-    grid_off_colour?: string;
+    grid_off_colour?: string | number[];
     loads?: ModernEntityItem[];
     inverter_stats?: ModernEntityItem[];
 }
