@@ -639,9 +639,6 @@ export class SunSynkCardEditor
                                 },
                             ]
                         : []),
-                    {
-                        type: 'expandable',
-                        title: this._title('general'),
 					{
 						type: 'expandable',
 						title: this._title('general'),
