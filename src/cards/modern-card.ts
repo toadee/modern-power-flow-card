@@ -3,6 +3,7 @@ import type { CustomEntity } from '../inverters/dto/custom-entity';
 import type { DataDto, ModernResolvedItem, sunsynkPowerFlowCardConfig } from '../types';
 import { validGridDisconnected } from '../const';
 import { localize } from '../localize/localize';
+import bundledScene from '../assets/scene-clean.webp';
 
 // Artwork: clean 1536x1024 scene with NO baked-in labels or glowing paths.
 type Tone = 'solar' | 'battery' | 'load' | 'inverter' | 'grid';
@@ -132,7 +133,9 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
     const gridOff = validGridDisconnected.includes(String(data.gridStatus ?? '').toLowerCase());
     const gridOn = !gridOff && active(grid, config.grid?.off_threshold);
     const gridState = gridOff ? 'Off-grid' : !gridOn ? localize('common.idle') : (grid ?? 0) > 0 ? 'Importing' : 'Exporting';
-    const gridOffColour = m.grid_off_colour ?? C.red;
+    const toCss = (c: unknown): string | undefined =>
+        Array.isArray(c) ? `rgb(${c.join(',')})` : typeof c === 'string' && c ? c : undefined;
+    const gridOffColour = toCss(m.grid_off_colour) ?? C.red;
     const costUnit = String(data.stateEnergyCostBuy?.attributes?.unit_of_measurement ?? '');
     const gridRows: Row[] = [
         { label: 'Connection', value: gridOff ? 'Disconnected' : 'Connected', entity: entityOf('grid_connected_status_194'),
@@ -179,7 +182,14 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
         </svg>`;
     };
 
-    const image = config.modern_scene_image;
+    // Optional override; falls back to the artwork bundled in the JS file
+    const image = config.modern_scene_image || bundledScene;
+    const onImgError = (e: Event) => {
+        const img = e.currentTarget as HTMLImageElement;
+        if (img.dataset.fallback) return; // prevent loops
+        img.dataset.fallback = '1';
+        img.src = bundledScene;
+    };
 
     return html`
         <style>
@@ -231,9 +241,8 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
             ${m.show_header === false ? nothing : html`
                 <header><h2>${m.title ?? 'Energy'}</h2><span class="subtitle">${m.subtitle ?? 'Home power flow'}</span></header>`}
             <div class="scene">
-                ${image
-                    ? html`<img class="art" src=${image} alt="Home with rooftop solar, grid connection, inverter and battery" />`
-                    : html`<div class="missing">Set <code>modern_scene_image</code> to show the scene.</div>`}
+                    <img class="art" src=${image} @error=${onImgError}
+                    alt="Home with rooftop solar, grid connection, inverter and battery" />
                 <svg class="routes" viewBox="0 0 1536 1024" aria-hidden="true">
                     ${config.show_grid ? flow('grid-flow', 'M250 278 Q370 367 520 402', grid, gridOn, (grid ?? 0) < 0,
                         gridOff ? gridOffColour : C.gold, gridOff) : nothing}
