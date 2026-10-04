@@ -13,7 +13,10 @@ const plugins = [
     main: true,
   }),
   commonjs(),
-  typescript(),
+  typescript({
+    include: ['**/*.ts', '**/*.tsx'],
+    clean: true,
+  }),
   json(),
   babel({
     exclude: 'node_modules/**',
