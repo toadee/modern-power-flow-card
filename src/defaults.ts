@@ -49,6 +49,7 @@ export default {
 		invert_flow: false,
 		label_daily_chrg: '',
 		label_daily_dischrg: '',
+		off_threshold: 0,
 	},
 	battery2: {
 		energy: 0,
