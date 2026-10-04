@@ -4,6 +4,20 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import terser from '@rollup/plugin-terser';
 import json from '@rollup/plugin-json';
+import url from '@rollup/plugin-url';
+
+const plugins = [
+  // Always inline scene artwork as a data URI so it ships inside the single JS file
+  url({
+    include: ['**/*.webp', '**/*.png'],
+    limit: Infinity,
+  }),
+  nodeResolve({
+    jsnext: true,
+    main: true,
+  }),
+  // ...rest unchanged
+];
 
 const isWatch = process.env.ROLLUP_WATCH === 'true';
 
