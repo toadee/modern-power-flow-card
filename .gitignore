@@ -1,5 +1,5 @@
 dist/*
-!dist/sunsynk-power-flow-card.js
+!dist/solar-power-flow-card.js
 
 .devcontainer/*
 !.devcontainer/recommended-devcontainer.json
