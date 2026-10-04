@@ -71,6 +71,15 @@
     "externalcontrol": "External Control",
     "recharge": "Recharge",
     "scheduledrecharge": "Scheduled Recharge"
+    "modern_scene_image": "Scene image override (optional)",
+    "subtitle": "Subtitle",
+    "show_header": "Show header",
+    "show_unmeasured": "Show unmeasured load",
+    "grid_off_colour": "Grid-off colour",
+    "scene_width": "Scene width (e.g. 480px)",
+    "tile_min_width": "Min block width (e.g. 210px)",
+    "layout": "Layout",
+    "scene_position": "Scene position",
   },
   "errors": {
     "battery": {
