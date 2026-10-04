@@ -44,6 +44,7 @@ export enum CardStyle {
 	Compact = 'compact',
 	Lite = 'lite',
 	Full = 'full',
+	Modern = 'modern',
 }
 
 export enum AutarkyType {
@@ -227,7 +228,7 @@ export interface sunsynkPowerFlowCardConfig extends LovelaceCardConfig {
 		label_daily_grid_sell: string;
 		export_colour: string;
 		no_grid_colour: string;
-		grid_off_colour: string;
+		grid_off_colour?: string | number [];
 		show_daily_buy: boolean;
 		show_daily_sell: boolean;
 		show_nonessential: boolean;
