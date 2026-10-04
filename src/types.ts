@@ -55,7 +55,8 @@ export enum AutarkyType {
 export interface sunsynkPowerFlowCardConfig extends LovelaceCardConfig {
 	type: string;
 	modern_view?: boolean;
-	modern_scene_image?: string;
+    modern_scene_image?: string;
+    modern?: ModernConfig;
 	cardstyle: CardStyle;
 	wide?: boolean;
 	large_font?: boolean;
@@ -382,6 +383,28 @@ export interface InverterSettings {
 	charge?: string;
 	capacity: number;
 }
+export interface ModernEntityItem {
+    entity: string;
+    name?: string;
+    icon?: string;
+}
+
+export interface ModernConfig {
+    title?: string;
+    subtitle?: string;
+    show_header?: boolean;
+    show_unmeasured?: boolean;
+    grid_off_colour?: string;
+    loads?: ModernEntityItem[];
+    inverter_stats?: ModernEntityItem[];
+}
+
+export interface ModernResolvedItem {
+    entityId: string;
+    name: string;
+    icon: string;
+    state: CustomEntity;
+}
 
 export interface DataDto {
 	timestamp_id: number;
@@ -622,4 +645,6 @@ export interface DataDto {
 	customGridIconColour;
 	maximumSOC;
 	batteryCount;
+	modernLoads: ModernResolvedItem[];
+    modernInverterStats: ModernResolvedItem[];
 }
