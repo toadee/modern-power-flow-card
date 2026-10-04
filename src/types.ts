@@ -396,6 +396,10 @@ export interface ModernConfig {
     show_header?: boolean;
     show_unmeasured?: boolean;
     grid_off_colour?: string | number[];
+    scene_width?: string | number;
+    tile_min_width?: string | number;
+    layout?: 'auto' | 'stacked' | 'side';
+    scene_position?: 'left' | 'right';
     loads?: ModernEntityItem[];
     inverter_stats?: ModernEntityItem[];
 }
