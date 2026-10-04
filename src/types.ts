@@ -107,6 +107,7 @@ export interface sunsynkPowerFlowCardConfig extends LovelaceCardConfig {
 		soc_decimal_places?: number;
 		label_daily_chrg: string;
 		label_daily_dischrg: string;
+		off_threshold?: number;
 	};
 	battery2: {
 		energy: any;
