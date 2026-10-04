@@ -38,6 +38,7 @@ import merge from 'lodash.merge';
 import { Utils } from './helpers/utils';
 import { fullCard } from './cards/full-card';
 import { compactCard } from './cards/compact-card';
+import { modernCard, ModernSceneOptions } from './cards/modern-card';
 import { globalData } from './helpers/globals';
 import { InverterFactory } from './inverters/inverter-factory';
 import { BatteryIconManager } from './helpers/battery-icon-manager';
@@ -2766,8 +2767,11 @@ export class SunsynkPowerFlowCard extends LitElement {
 		};
 
 		let template: TemplateResult | null = null;
-		let variantKey: 'full' | 'compact' | undefined;
-		if (this.isFullCard) {
+		let variantKey: 'full' | 'compact' | 'modern' | undefined;
+		if ((config as sunsynkPowerFlowCardConfig & ModernSceneOptions).modern_view) {
+			variantKey = 'modern';
+			template = modernCard(config, data);
+		} else if (this.isFullCard) {
 			variantKey = 'full';
 			template = fullCard(config, inverterImg, data);
 		} else if (this.isLiteCard || this.isCompactCard) {
