@@ -3,7 +3,7 @@ import { CustomEntity } from './inverters/dto/custom-entity';
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'sunsynk-power-flow-card': LovelaceCard;
+		'modern-power-flow-card': LovelaceCard;
 	}
 }
 
@@ -54,6 +54,8 @@ export enum AutarkyType {
 
 export interface sunsynkPowerFlowCardConfig extends LovelaceCardConfig {
 	type: string;
+	modern_view?: boolean;
+	modern_scene_image?: string;
 	cardstyle: CardStyle;
 	wide?: boolean;
 	large_font?: boolean;
