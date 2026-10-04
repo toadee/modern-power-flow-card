@@ -4,6 +4,7 @@ import type { DataDto, ModernResolvedItem, sunsynkPowerFlowCardConfig } from '..
 import { validGridDisconnected } from '../const';
 import { localize } from '../localize/localize';
 import bundledScene from '../assets/scene-clean.webp';
+import { styleMap } from 'lit/directives/style-map.js';
 
 // Artwork: clean 1536x1024 scene with NO baked-in labels or glowing paths.
 type Tone = 'solar' | 'battery' | 'load' | 'inverter' | 'grid';
@@ -181,6 +182,20 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
                 </circle>`) : nothing}
         </svg>`;
     };
+	
+	// ---------- layout (configurable via modern.*) ----------
+    // Only accept simple CSS lengths, so YAML can't inject arbitrary CSS
+    const cssLen = (v: unknown, fallback: string): string => {
+        if (typeof v === 'number' && v > 0) return `${v}px`;
+        if (typeof v === 'string' && /^\d+(\.\d+)?(px|rem|em|vw|%)$/.test(v.trim())) return v.trim();
+        return fallback;
+    };
+    const layout = ['auto', 'stacked', 'side'].includes(String(m.layout)) ? String(m.layout) : 'auto';
+    const position = m.scene_position === 'right' ? 'right' : 'left';
+    const cardVars = styleMap({
+        '--mpf-scene-w': cssLen(m.scene_width, '480px'),
+        '--mpf-tile-min': cssLen(m.tile_min_width, '210px'),
+    });
 
     // Optional override; falls back to the artwork bundled in the JS file
     const image = config.modern_scene_image || bundledScene;
@@ -196,22 +211,33 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
             .mpf{--bg1:#071625;--bg2:#073745;--fg:#dfebf1;--muted:#a9c2d0;--line:#83d8c62e;
                 container-type:inline-size;overflow:hidden;border:1px solid var(--line);border-radius:24px;
                 background:linear-gradient(130deg,var(--bg1),var(--bg2));color:var(--fg)}
-            .mpf header{padding:18px 22px 0;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+            .mpf header{padding:18px 22px 12px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
             .mpf h2{font-size:22px;margin:0;color:${C.teal};font-weight:600}
             .mpf .subtitle{font-size:12px;color:var(--muted)}
-            .mpf .scene{position:relative;aspect-ratio:3/2}
+
+            /* ----- layout: scene + tiles ----- */
+            .mpf .body{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:16px;padding:0 16px 18px}
+            .mpf .body.right{flex-direction:row-reverse}
+            .mpf .body.side{flex-wrap:nowrap}
+            .mpf .body.stacked{flex-direction:column;align-items:center}
+            .mpf .scene{position:relative;aspect-ratio:3/2;flex:0 1 var(--mpf-scene-w);width:var(--mpf-scene-w);
+                max-width:100%;min-width:0;border-radius:16px;overflow:hidden}
+            .mpf .body.stacked .scene{flex:none}
+            .mpf .tiles{flex:1 1 calc(var(--mpf-tile-min) * 2 + 12px);min-width:0;display:grid;gap:12px;
+                grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--mpf-tile-min)),1fr))}
+            .mpf .body.stacked .tiles{flex:none;width:100%}
+
             .mpf .art,.mpf .routes{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
             .mpf .routes{pointer-events:none}
-            .mpf .missing{position:absolute;inset:35% 20%;display:grid;place-content:center;text-align:center;color:var(--muted)}
             .mpf .broken{animation:mpf-alert 1.6s ease-in-out infinite}
             @keyframes mpf-alert{50%{stroke-opacity:.45}}
-            .mpf .tiles{display:grid;gap:12px;padding:4px 16px 18px;
-                grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+
+            /* ----- tiles ----- */
             .mpf .tile{--accent:${C.teal};background:#061c2ee6;border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);
                 border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
             .mpf .solar{--accent:${C.gold}} .mpf .load{--accent:${C.blue}}
             .mpf .inverter{--accent:${C.violet}} .mpf .grid{--accent:${C.gold}}
-            .mpf .grid.off{--accent:${gridOffColour};box-shadow:0 0 0 1px ${gridOffColour}66 inset}
+            .mpf .grid.off{--accent:${gridOffColour};box-shadow:0 0 0 1px color-mix(in srgb,${gridOffColour} 40%,transparent) inset}
             .mpf button{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer}
             .mpf button:disabled{cursor:default}
             .mpf button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
@@ -234,56 +260,63 @@ export function modernCard(config: sunsynkPowerFlowCardConfig, data: DataDto): T
             .mpf .string .name{font-size:12px;color:var(--muted);grid-row:span 2;align-self:center}
             .mpf .string .metrics{display:flex;justify-content:flex-end;gap:10px;font-size:12px;font-variant-numeric:tabular-nums}
             .mpf .string .metrics b{color:var(--accent);font-weight:600}
-            @container (max-width:420px){.mpf .value{font-size:20px}.mpf header{padding:14px 16px 0}.mpf .tiles{padding:4px 10px 12px;gap:8px}}
+
+            /* ----- narrow cards ----- */
+            @container (max-width:640px){.mpf .body.side{flex-wrap:wrap}}
+            @container (max-width:420px){.mpf .value{font-size:20px}.mpf header{padding:14px 16px 8px}
+                .mpf .body{padding:0 10px 12px;gap:10px}.mpf .tiles{gap:8px}}
             @media (prefers-reduced-motion:reduce){.mpf .particle{display:none}.mpf .broken{animation:none}}
         </style>
-        <ha-card class="mpf">
+        <ha-card class="mpf" style=${cardVars}>
             ${m.show_header === false ? nothing : html`
                 <header><h2>${m.title ?? 'Energy'}</h2><span class="subtitle">${m.subtitle ?? 'Home power flow'}</span></header>`}
-            <div class="scene">
+
+            <div class="body ${layout} ${position}">
+                <div class="scene">
                     <img class="art" src=${image} @error=${onImgError}
-                    alt="Home with rooftop solar, grid connection, inverter and battery" />
-                <svg class="routes" viewBox="0 0 1536 1024" aria-hidden="true">
-                    ${config.show_grid ? flow('grid-flow', 'M250 278 Q370 367 520 402', grid, gridOn, (grid ?? 0) < 0,
-                        gridOff ? gridOffColour : C.gold, gridOff) : nothing}
-                    ${config.show_solar ? flow('solar-flow', 'M936 282 C976 294 948 408 990 438 Q1026 452 1026 500',
-                        solar, solarOn, false, C.gold) : nothing}
-                    ${config.show_battery ? flow('battery-flow', 'M1068 620 L1070 674 Q1070 694 1100 680 L1180 657',
-                        battFlow, battOn && !floating, (battFlow ?? 0) > 0, C.teal) : nothing}
-                    ${flow('load-flow', 'M962 589 L920 577 Q910 573 890 580 L850 593 L778 569',
-                        load, loadOn, (load ?? 0) < 0, C.teal)}
-                </svg>
-            </div>
+                        alt="Home with rooftop solar, grid connection, inverter and battery" />
+                    <svg class="routes" viewBox="0 0 1536 1024" aria-hidden="true">
+                        ${config.show_grid ? flow('grid-flow', 'M250 278 Q370 367 520 402', grid, gridOn, (grid ?? 0) < 0,
+                            gridOff ? gridOffColour : C.gold, gridOff) : nothing}
+                        ${config.show_solar ? flow('solar-flow', 'M936 282 C976 294 948 408 990 438 Q1026 452 1026 500',
+                            solar, solarOn, false, C.gold) : nothing}
+                        ${config.show_battery ? flow('battery-flow', 'M1068 620 L1070 674 Q1070 694 1100 680 L1180 657',
+                            battFlow, battOn && !floating, (battFlow ?? 0) > 0, C.teal) : nothing}
+                        ${flow('load-flow', 'M962 589 L920 577 Q910 573 890 580 L850 593 L778 569',
+                            load, loadOn, (load ?? 0) < 0, C.teal)}
+                    </svg>
+                </div>
 
-            <div class="tiles">
-                ${config.show_solar ? tile('solar', 'Solar', 'mdi:solar-power-variant', power(solar),
-                    solarOn ? 'Generating' : localize('common.idle'),
-                    entityOf('pv_total') ?? entityOf('pv1_power_186'),
-                    html`${strings.map((s) => html`
-                        <button class="string" ?disabled=${!s.entity} @click=${(e: Event) => moreInfo(e, s.entity)}
-                            aria-label="${s.name}: ${s.watts}, ${s.volts}, ${s.amps}">
-                            <span class="name">${s.name}</span>
-                            <span class="metrics"><b>${s.watts}</b><span>${s.volts}</span><span>${s.amps}</span></span>
-                        </button>`)}
-                        ${rows([config.solar?.show_daily
-                            ? { label: 'Today', value: fmt(data.stateDayPVEnergy, dpe), entity: entityOf('day_pv_energy_108') }
-                            : { label: '', value: null }])}`) : nothing}
+                <div class="tiles">
+                    ${config.show_solar ? tile('solar', 'Solar', 'mdi:solar-power-variant', power(solar),
+                        solarOn ? 'Generating' : localize('common.idle'),
+                        entityOf('pv_total') ?? entityOf('pv1_power_186'),
+                        html`${strings.map((s) => html`
+                            <button class="string" ?disabled=${!s.entity} @click=${(e: Event) => moreInfo(e, s.entity)}
+                                aria-label="${s.name}: ${s.watts}, ${s.volts}, ${s.amps}">
+                                <span class="name">${s.name}</span>
+                                <span class="metrics"><b>${s.watts}</b><span>${s.volts}</span><span>${s.amps}</span></span>
+                            </button>`)}
+                            ${rows([config.solar?.show_daily && configured('day_pv_energy_108')
+                                ? { label: 'Today', value: fmt(data.stateDayPVEnergy, dpe), entity: entityOf('day_pv_energy_108') }
+                                : { label: '', value: null }])}`) : nothing}
 
-                ${config.show_battery ? tile('battery', 'Battery', battIcon, socValid ? `${soc}%` : '—', battState,
-                    entityOf('battery_soc_184'),
-                    html`<div class="bar" role="progressbar" aria-label="Battery charge"
-                            aria-valuemin="0" aria-valuemax="100" aria-valuenow=${socValid ? soc : 0}>
-                            <span style="width:${socValid ? Math.min(100, Math.max(0, soc)) : 0}%"></span></div>
-                        ${rows(battRows)}`) : nothing}
+                    ${config.show_battery ? tile('battery', 'Battery', battIcon, socValid ? `${soc}%` : '—', battState,
+                        entityOf('battery_soc_184'),
+                        html`<div class="bar" role="progressbar" aria-label="Battery charge"
+                                aria-valuemin="0" aria-valuemax="100" aria-valuenow=${socValid ? soc : 0}>
+                                <span style="width:${socValid ? Math.min(100, Math.max(0, soc)) : 0}%"></span></div>
+                            ${rows(battRows)}`) : nothing}
 
-                ${tile('load', 'Home', 'mdi:home-lightning-bolt-outline', power(load),
-                    loadOn ? 'Consuming' : localize('common.idle'), entityOf('essential_power'), rows(loadRows))}
+                    ${tile('load', 'Home', 'mdi:home-lightning-bolt-outline', power(load),
+                        loadOn ? 'Consuming' : localize('common.idle'), entityOf('essential_power'), rows(loadRows))}
 
-                ${tile('inverter', 'Inverter', 'mdi:solar-power', invStatus, cap(config.inverter?.model ?? ''),
-                    entityOf('inverter_status_59'), rows(invRows), '', invDot)}
+                    ${tile('inverter', 'Inverter', 'mdi:solar-power', invStatus, cap(config.inverter?.model ?? ''),
+                        entityOf('inverter_status_59'), rows(invRows), '', invDot)}
 
-                ${config.show_grid ? tile('grid', 'Grid', gridOff ? 'mdi:transmission-tower-off' : 'mdi:transmission-tower',
-                    power(grid), gridState, entityOf('grid_ct_power_172'), rows(gridRows), gridOff ? 'off' : '') : nothing}
+                    ${config.show_grid ? tile('grid', 'Grid', gridOff ? 'mdi:transmission-tower-off' : 'mdi:transmission-tower',
+                        power(grid), gridState, entityOf('grid_ct_power_172'), rows(gridRows), gridOff ? 'off' : '') : nothing}
+                </div>
             </div>
         </ha-card>`;
 }
