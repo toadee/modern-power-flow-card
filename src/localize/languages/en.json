@@ -95,6 +95,10 @@
   },
   "config": {
     "title": "Title",
+    "scene_width": "Scene width (e.g. 480px)",
+    "tile_min_width": "Min block width (e.g. 210px)",
+    "layout": "Layout",
+    "scene_position": "Scene position",
     "title_colour": "Title Colour",
     "title_size": "Title Size (px)",
     "card_height": "Card Height (px)",
