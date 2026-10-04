@@ -38,7 +38,8 @@ import merge from 'lodash.merge';
 import { Utils } from './helpers/utils';
 import { fullCard } from './cards/full-card';
 import { compactCard } from './cards/compact-card';
-import { modernCard, ModernSceneOptions } from './cards/modern-card';
+import { modernCard } from './cards/modern-card';
+import { ModernEntityItem, ModernResolvedItem } from './types'; // or merge into the existing types import
 import { globalData } from './helpers/globals';
 import { InverterFactory } from './inverters/inverter-factory';
 import { BatteryIconManager } from './helpers/battery-icon-manager';
@@ -49,11 +50,11 @@ import {
 import { icons } from './helpers/icons';
 
 console.groupCollapsed(
-	`%c ⚡ SUNSYNK-POWER-FLOW-CARD %c ${localize('common.version')}: ${CARD_VERSION} `,
+	`%c ⚡ SOLAR-POWER-FLOW-CARD %c ${localize('common.version')}: ${CARD_VERSION} `,
 	'color: orange; font-weight: bold; background: black',
 	'color: white; font-weight: bold; background: dimgray',
 );
-console.log('Readme:', 'https://github.com/slipx06/sunsynk-power-flow-card');
+console.log('Readme:', 'https://github.com/toadee/modern-power-flow-card');
 console.groupEnd();
 
 @customElement(MAIN_NAME)
